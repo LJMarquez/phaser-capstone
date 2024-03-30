@@ -11,6 +11,10 @@ class Preloader extends Phaser.Scene {
         'character/Color-1/_Idle.png',
         { frameWidth: 120, frameHeight: 80 }
         );
+        this.load.spritesheet('playerWalk',
+        'character/Color-1/_Run.png',
+        { frameWidth: 120, frameHeight: 80 }
+        );
         // this.load.spritesheet('kroolIdle', 
         // 'assets/krool-idle.png',
         // { frameWidth: 50, frameHeight: 48}
@@ -22,7 +26,10 @@ class Preloader extends Phaser.Scene {
     }
 }
 
+let cursors;
+let player;
 class Game extends Phaser.Scene {
+
     constructor() {
         super('game');
     }
@@ -31,6 +38,8 @@ class Game extends Phaser.Scene {
     }
 
     create() {
+        cursors = this.input.keyboard.createCursorKeys();
+
         const map = this.make.tilemap({ key: 'dungeon' });
         const tileset = map.addTilesetImage('dungeon', 'tiles');
 
@@ -56,16 +65,41 @@ class Game extends Phaser.Scene {
         this.anims.create({
             key: 'playerIdle',
             frames: this.anims.generateFrameNumbers('playerIdle', { start: 0, end: 9 }),
-            frameRate: 10,
+            frameRate: 15,
             repeat: -1
         });
 
-        const player = this.add.sprite(128, 128, 'playerIdle');
-        player.anims.play('playerIdle');
+        this.anims.create({
+            key: 'playerWalk',
+            frames: this.anims.generateFrameNumbers('playerWalk', { start: 0, end: 9 }),
+            frameRate: 15,
+            repeat: -1
+        });
+
+        player = this.physics.add.sprite(128, 128, 'playerIdle');
+        player.setCollideWorldBounds(true);
 
     }
 
     update() {
+        if (cursors.left.isDown) {
+            player.setVelocityX(-100);
+            player.setFlipX(true);
+            player.anims.play('playerWalk', true);
+        } else if (cursors.right.isDown) {
+            player.setVelocityX(100);
+            player.setFlipX(false);
+            player.anims.play('playerWalk', true);
+        } else if (cursors.up.isDown) {
+            player.setVelocityY(-100);
+            player.anims.play('playerWalk', true);
+        } else if (cursors.down.isDown) {
+            player.setVelocityY(100);
+            player.anims.play('playerWalk', true);
+        } else {
+            player.setVelocity(0);
+            player.anims.play('playerIdle', true);
+        }
     }
 }
 

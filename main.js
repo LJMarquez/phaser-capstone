@@ -28,6 +28,7 @@ class Preloader extends Phaser.Scene {
 
 let cursors;
 let player;
+let facingLeft = false;
 class Game extends Phaser.Scene {
 
     constructor() {
@@ -77,19 +78,32 @@ class Game extends Phaser.Scene {
         });
 
         player = this.physics.add.sprite(128, 128, 'playerIdle');
+        player.body.setSize(player.width * 0.25, player.height * 0.55);
+        player.body.offset.x = 40;
+        player.body.offset.y = 38;
         player.setCollideWorldBounds(true);
+
+        this.physics.add.collider(player, wallsLayer);
+        this.cameras.main.startFollow(player, true);
 
     }
 
     update() {
+        if (facingLeft) {
+            player.setFlipX(true);
+            player.body.offset.x = 50;
+        } else {
+            player.setFlipX(false);
+            player.body.offset.x = 40;
+        }
         if (cursors.left.isDown) {
             player.setVelocityX(-100);
-            player.setFlipX(true);
             player.anims.play('playerWalk', true);
+            facingLeft = true;
         } else if (cursors.right.isDown) {
             player.setVelocityX(100);
-            player.setFlipX(false);
             player.anims.play('playerWalk', true);
+            facingLeft = false;
         } else if (cursors.up.isDown) {
             player.setVelocityY(-100);
             player.anims.play('playerWalk', true);
@@ -110,7 +124,8 @@ const game = new Phaser.Game({
     physics: {
         default: 'arcade',
         arcade: {
-            gravity: { y: 0 }
+            gravity: { y: 0 },
+            debug: true
         }
     },
     scene: [Preloader, Game],

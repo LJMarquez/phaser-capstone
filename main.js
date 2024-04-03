@@ -92,23 +92,26 @@ class Game extends Phaser.Scene {
             player.setFlipX(false);
             player.body.offset.x = 40;
         }
+
         if (cursors.left.isDown) {
-            player.setVelocity(-100, 0);
+            player.setVelocityX(-100);
             player.anims.play('playerWalk', true);
             facingLeft = true;
         } else if (cursors.right.isDown) {
-            player.setVelocity(100, 0);
+            player.setVelocityX(100);
             player.anims.play('playerWalk', true);
             facingLeft = false;
-        } else if (cursors.up.isDown) {
-            player.setVelocity(0, -100);
+        }
+    
+        if (cursors.up.isDown) {
+            player.setVelocityY(-100);
             player.anims.play('playerWalk', true);
         } else if (cursors.down.isDown) {
-            player.setVelocity(0, 100);
+            player.setVelocityY(100);
             player.anims.play('playerWalk', true);
-        // } else if (cursors.left.isDown && cursors.up.isDown) {
-        //     player.setVelocity(-100, 100);
-        } else {
+        }
+        
+        if (cursors.up.isUp && cursors.down.isUp && cursors.left.isUp && cursors.right.isUp) {
             player.setVelocity(0);
             player.anims.play('playerIdle', true);
         }

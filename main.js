@@ -8,17 +8,13 @@ class Preloader extends Phaser.Scene {
         this.load.tilemapTiledJSON('dungeon', './tiles/dungeon-01.json');
 
         this.load.spritesheet('playerIdle',
-        'character/Color-1/_Idle.png',
+        'character/Color-2/_Idle.png',
         { frameWidth: 120, frameHeight: 80 }
         );
         this.load.spritesheet('playerWalk',
-        'character/Color-1/_Run.png',
+        'character/Color-2/_Run.png',
         { frameWidth: 120, frameHeight: 80 }
         );
-        // this.load.spritesheet('kroolIdle', 
-        // 'assets/krool-idle.png',
-        // { frameWidth: 50, frameHeight: 48}
-        // );
     }
 
     create() {
@@ -42,7 +38,7 @@ class Game extends Phaser.Scene {
         cursors = this.input.keyboard.createCursorKeys();
 
         const map = this.make.tilemap({ key: 'dungeon' });
-        const tileset = map.addTilesetImage('dungeon', 'tiles');
+        const tileset = map.addTilesetImage('dungeon', 'tiles', 16, 16);
 
         map.createLayer('Ground', tileset);
         const wallsLayer = map.createLayer('Walls', tileset);
@@ -78,10 +74,10 @@ class Game extends Phaser.Scene {
         });
 
         player = this.physics.add.sprite(128, 128, 'playerIdle');
+        // player.setScale(0.9);
         player.body.setSize(player.width * 0.25, player.height * 0.55);
         player.body.offset.x = 40;
         player.body.offset.y = 38;
-        player.setCollideWorldBounds(true);
 
         this.physics.add.collider(player, wallsLayer);
         this.cameras.main.startFollow(player, true);
@@ -97,19 +93,21 @@ class Game extends Phaser.Scene {
             player.body.offset.x = 40;
         }
         if (cursors.left.isDown) {
-            player.setVelocityX(-100);
+            player.setVelocity(-100, 0);
             player.anims.play('playerWalk', true);
             facingLeft = true;
         } else if (cursors.right.isDown) {
-            player.setVelocityX(100);
+            player.setVelocity(100, 0);
             player.anims.play('playerWalk', true);
             facingLeft = false;
         } else if (cursors.up.isDown) {
-            player.setVelocityY(-100);
+            player.setVelocity(0, -100);
             player.anims.play('playerWalk', true);
         } else if (cursors.down.isDown) {
-            player.setVelocityY(100);
+            player.setVelocity(0, 100);
             player.anims.play('playerWalk', true);
+        // } else if (cursors.left.isDown && cursors.up.isDown) {
+        //     player.setVelocity(-100, 100);
         } else {
             player.setVelocity(0);
             player.anims.play('playerIdle', true);
@@ -125,7 +123,7 @@ const game = new Phaser.Game({
         default: 'arcade',
         arcade: {
             gravity: { y: 0 },
-            debug: true
+            // debug: true
         }
     },
     scene: [Preloader, Game],

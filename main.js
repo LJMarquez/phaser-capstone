@@ -8,12 +8,12 @@ class Preloader extends Phaser.Scene {
         this.load.tilemapTiledJSON('dungeon', './tiles/dungeon-01.json');
 
         this.load.spritesheet('playerIdle',
-        'character/Color-2/_Idle.png',
-        { frameWidth: 120, frameHeight: 80 }
+        'character/Knight_Idle.png',
+        { frameWidth: 52, frameHeight: 52 }
         );
         this.load.spritesheet('playerWalk',
-        'character/Color-2/_Run.png',
-        { frameWidth: 120, frameHeight: 80 }
+        'character/Knight_Move.png',
+        { frameWidth: 52, frameHeight: 52 }
         );
     }
 
@@ -25,6 +25,10 @@ class Preloader extends Phaser.Scene {
 let cursors;
 let player;
 let facingLeft = false;
+let facingUp = false;
+let walkingX;
+let walkingUp;
+let walkingDown;
 class Game extends Phaser.Scene {
 
     constructor() {
@@ -61,23 +65,50 @@ class Game extends Phaser.Scene {
 
         this.anims.create({
             key: 'playerIdle',
-            frames: this.anims.generateFrameNumbers('playerIdle', { start: 0, end: 9 }),
+            frames: [ { key: 'playerIdle', frame: 0 } ],
+            frameRate: 15
+        });
+
+        this.anims.create({
+            key: 'playerWalkD',
+            frames: this.anims.generateFrameNumbers('playerWalk', { start: 0, end: 3 }),
+            frameRate: 15,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'playerWalkDD',
+            frames: this.anims.generateFrameNumbers('playerWalk', { start: 4, end: 7 }),
             frameRate: 15,
             repeat: -1
         });
 
         this.anims.create({
             key: 'playerWalk',
-            frames: this.anims.generateFrameNumbers('playerWalk', { start: 0, end: 9 }),
+            frames: this.anims.generateFrameNumbers('playerWalk', { start: 8, end: 11 }),
+            frameRate: 15,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'playerWalkDU',
+            frames: this.anims.generateFrameNumbers('playerWalk', { start: 12, end: 15 }),
+            frameRate: 15,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'playerWalkU',
+            frames: this.anims.generateFrameNumbers('playerWalk', { start: 16, end: 19 }),
             frameRate: 15,
             repeat: -1
         });
 
         player = this.physics.add.sprite(128, 128, 'playerIdle');
-        // player.setScale(0.9);
-        player.body.setSize(player.width * 0.25, player.height * 0.55);
-        player.body.offset.x = 40;
-        player.body.offset.y = 38;
+        // player.setScale(2);
+        player.body.setSize(player.width * 0.3, player.height * 0.5);
+        // player.body.offset.x = 40;
+        // player.body.offset.y = 38;
 
         this.physics.add.collider(player, wallsLayer);
         this.cameras.main.startFollow(player, true);
@@ -87,33 +118,67 @@ class Game extends Phaser.Scene {
     update() {
         if (facingLeft) {
             player.setFlipX(true);
-            player.body.offset.x = 50;
         } else {
             player.setFlipX(false);
-            player.body.offset.x = 40;
         }
 
         if (cursors.left.isDown) {
-            player.setVelocityX(-100);
-            player.anims.play('playerWalk', true);
+            // player.setVelocityX(-100);
             facingLeft = true;
+            walkingX = true;
         } else if (cursors.right.isDown) {
-            player.setVelocityX(100);
-            player.anims.play('playerWalk', true);
+            // player.setVelocityX(100);
             facingLeft = false;
+            walkingX = true;
+        } else if (cursors.right.isUp && cursors.left.isUp) {
+            walkingX = false;
         }
     
         if (cursors.up.isDown) {
-            player.setVelocityY(-100);
-            player.anims.play('playerWalk', true);
+            // player.setVelocityY(-100);
+            walkingUp = true;
+            walkingDown = false;
         } else if (cursors.down.isDown) {
-            player.setVelocityY(100);
+            // player.setVelocityY(100);
+            walkingDown = true;
+            walkingUp = false;
+        }
+
+        if (walkingX && walkingDown) {
+            player.anims.play('playerWalkDD', true);
+            if (facingLeft) {
+                player.setVelocity(-100, 100);
+            } else {
+                player.setVelocity(100, 100);
+            }
+        } else if (walkingX && walkingUp) {
+            player.anims.play('playerWalkDU', true);
+            if (facingLeft) {
+                player.setVelocity(-100, -100);
+            } else {
+                player.setVelocity(100, -100);
+            }
+        } else if (walkingX) {
             player.anims.play('playerWalk', true);
+            if (facingLeft) {
+                player.setVelocity(-100, 0);
+            } else {
+                player.setVelocity(100, 0);
+            }
+        } else if (walkingUp) {
+            player.anims.play('playerWalkU', true);
+            player.setVelocity(0, -100);
+        } else if (walkingDown) {
+            player.anims.play('playerWalkD', true);
+            player.setVelocity(0, 100);
         }
         
         if (cursors.up.isUp && cursors.down.isUp && cursors.left.isUp && cursors.right.isUp) {
             player.setVelocity(0);
             player.anims.play('playerIdle', true);
+            walkingDown = false;
+            walkingUp = false;
+            walkingX = false;
         }
     }
 }

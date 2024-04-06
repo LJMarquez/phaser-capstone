@@ -15,19 +15,32 @@ class Preloader extends Phaser.Scene {
       frameWidth: 52,
       frameHeight: 52,
     });
+    this.load.spritesheet("playerAttack", "character/Knight_Attack.png", {
+      frameWidth: 52,
+      frameHeight: 52,
+    });
     this.load.spritesheet("enemyWalk", "enemies/undead_walk.png", {
       frameWidth: 56,
       frameHeight: 48,
     });
-    this.load.spritesheet("enemyIdle", "enemies/skeletonIdle.png", {
-      frameWidth: 128,
-      frameHeight: 96,
+    this.load.spritesheet("enemyIdle", "enemies/undead_idle.png", {
+      frameWidth: 56,
+      frameHeight: 48,
     });
   }
 
   create() {
     this.scene.start("game");
   }
+}
+
+const debugDraw = (layer, scene) => {
+    const debugGraphics = scene.add.graphics().setAlpha(0.7);
+    layer.renderDebug(debugGraphics, {
+        tileColor: null,
+        collidingTileColor: new Phaser.Display.Color(243, 134, 48, 255),
+        faceColor: new Phaser.Display.Color(40, 39, 37, 255)
+    });
 }
 
 // const direction = { direction: {
@@ -37,11 +50,19 @@ class Preloader extends Phaser.Scene {
 //     "right"
 // }
 
-const up = "0";
-const down = "1";
-const left = "2";
-const right = "3";
+const UP = 0;
+const DOWN = 1;
+const LEFT = 2;
+const RIGHT = 3;
 let direction;
+
+const randomDirection = (exclude) => {
+  let newDirection = Phaser.Math.Between(0, 3);
+  while (newDirection === exclude) {
+    newDirection = Phaser.Math.Between(0, 3);
+  }
+  return newDirection
+}
 
 class Skeleton extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y, texture) {
@@ -49,13 +70,34 @@ class Skeleton extends Phaser.Physics.Arcade.Sprite {
 
     this.anims.play("enemyWalk", true);
 
-    this.direction = right;
+    // this.body.onCollide = true;
+
+    scene.physics.world.on(Phaser.Physics.Arcade.Events.TILE_COLLIDE, this.handleTileCollision, this)
+
+    this.moveEvent = scene.time.addEvent({
+      delay: 2000,
+      callback: () => {
+        this.direction = randomDirection(this.direction);
+      },
+      loop: true
+    })
+
+    this.direction = LEFT;
 
     scene.physics.world.enable(this);
     // this.setScale(0.65);
-    this.body.setSize(this.width * 0.5, this.height * 0.65); // Set body size
-    this.body.offset.y = 35;
-    this.body.offset.x = -5;
+    this.body.setSize(this.width * 0.6, this.height * 0.6);
+    this.body.offset.y = 13;
+    this.body.offset.x = 5;
+  }
+
+  handleTileCollision(go, tile) {
+    if (go !== this) {
+      return
+    }
+
+    // const newDirection = Phaser.Math.Between(0, 3);
+    this.direction = randomDirection(this.direction);
   }
   preUpdate(t, dt) {
     super.preUpdate(t, dt);
@@ -63,17 +105,21 @@ class Skeleton extends Phaser.Physics.Arcade.Sprite {
     const speed = 50;
 
     switch (this.direction) {
-      case up:
+      case UP:
         this.setVelocityY(-50);
         break;
-      case down:
+      case DOWN:
         this.setVelocityY(50);
         break;
-      case left:
+      case LEFT:
         this.setVelocityX(-50);
+        this.setFlipX(true);
+        this.body.offset.x = 18;
         break;
-      case right:
+      case RIGHT:
         this.setVelocityX(50);
+        this.setFlipX(false);
+        this.body.offset.x = 5;
         break;
     }
   }
@@ -104,6 +150,33 @@ const createPlayerAnims = (anims) => {
     key: "playerIdleU",
     frames: [{ key: "playerIdle", frame: 4 }],
   });
+
+  anims.create({
+    key: "playerAttackD",
+    frames: anims.generateFrameNumbers("playerAttack", { start: 0, end: 3 }),
+    frameRate: 15,
+    repeat: 0,
+  });
+
+  // anims.create({
+  //   key: "playerAttackDD",
+  //   frames: [{ key: "playerAttack", frame: 1 }],
+  // });
+
+  // anims.create({
+  //   key: "playerAttack",
+  //   frames: [{ key: "playerAttack", frame: 2 }],
+  // });
+
+  // anims.create({
+  //   key: "playerAttackDU",
+  //   frames: [{ key: "playerAttack", frame: 3 }],
+  // });
+
+  // anims.create({
+  //   key: "playerAttackU",
+  //   frames: [{ key: "playerAttack", frame: 4 }],
+  // });
 
   anims.create({
     key: "playerWalkD",
@@ -145,14 +218,14 @@ const createEnemyAnims = (anims) => {
   anims.create({
     key: "enemyWalk",
     frames: anims.generateFrameNumbers("enemyWalk", { start: 0, end: 7 }),
-    frameRate: 5,
+    frameRate: 15,
     repeat: -1,
   });
 
   anims.create({
     key: "enemyIdle",
-    frames: anims.generateFrameNumbers("enemyIdle", { start: 0, end: 3 }),
-    frameRate: 2,
+    frames: anims.generateFrameNumbers("enemyIdle", { start: 0, end: 17 }),
+    frameRate: 10,
     repeat: -1,
   });
 };
@@ -165,6 +238,7 @@ let currentDirection = "down";
 let walkingX;
 let walkingUp;
 let walkingDown;
+
 class Game extends Phaser.Scene {
   constructor() {
     super("game");
@@ -186,12 +260,7 @@ class Game extends Phaser.Scene {
 
     wallsLayer.setCollisionByProperty({ collides: true });
 
-    // const debugGraphics = this.add.graphics().setAlpha(0.7);
-    // wallsLayer.renderDebug(debugGraphics, {
-    //     tileColor: null,
-    //     collidingTileColor: new Phaser.Display.Color(243, 134, 48, 255),
-    //     faceColor: new Phaser.Display.Color(40, 39, 37, 255)
-    // });
+    debugDraw(wallsLayer, this);
 
     // start of player code
 
@@ -209,6 +278,10 @@ class Game extends Phaser.Scene {
 
     skeletons = this.physics.add.group({
       classType: Skeleton,
+      createCallback: (go) => {
+        const skelGo = go;
+        skelGo.body.onCollide = true;
+      }
     });
 
     skeletons.get(150, 150, "skeleton");
@@ -283,6 +356,29 @@ class Game extends Phaser.Scene {
       player.anims.play("playerWalkD", true);
       currentDirection = "down";
       player.setVelocity(0, 100);
+    }
+
+    // if (Phaser.Input.Keyboard.JustDown(cursors.space)) {
+    if (cursors.space.isDown) {
+      
+      switch (currentDirection) {
+        case "down":
+          player.anims.play("playerAttackD", true);
+          console.log("Attacking")
+          break;
+        case "up":
+          player.anims.play("playerAttackU");
+          break;
+        case "straight":
+          player.anims.play("playerAttack");
+          break;
+        case "diagonal down":
+          player.anims.play("playerAttackDD");
+          break;
+        case "diagonal up":
+          player.anims.play("playerAttackDU");
+          break;
+      }      
     }
 
     if (

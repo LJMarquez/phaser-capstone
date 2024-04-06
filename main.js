@@ -91,6 +91,11 @@ class Skeleton extends Phaser.Physics.Arcade.Sprite {
     this.body.offset.x = 5;
   }
 
+  destroy(fromScene) {
+    this.moveEvent.destroy();
+    super.destroy(fromScene)
+  }
+
   handleTileCollision(go, tile) {
     if (go !== this) {
       return
@@ -217,7 +222,7 @@ const createPlayerAnims = (anims) => {
 const createEnemyAnims = (anims) => {
   anims.create({
     key: "enemyWalk",
-    frames: anims.generateFrameNumbers("enemyWalk", { start: 0, end: 7 }),
+    frames: anims.generateFrameNumbers("enemyWalk", { start: 0, end: 17 }),
     frameRate: 15,
     repeat: -1,
   });
@@ -238,6 +243,7 @@ let currentDirection = "down";
 let walkingX;
 let walkingUp;
 let walkingDown;
+let playerAttacking = false;
 
 class Game extends Phaser.Scene {
   constructor() {
@@ -290,6 +296,8 @@ class Game extends Phaser.Scene {
 
     this.physics.add.collider(player, wallsLayer);
     this.physics.add.collider(skeletons, wallsLayer);
+    this.physics.add.collider(player, skeletons);
+
   }
 
   update() {
@@ -358,9 +366,9 @@ class Game extends Phaser.Scene {
       player.setVelocity(0, 100);
     }
 
-    // if (Phaser.Input.Keyboard.JustDown(cursors.space)) {
-    if (cursors.space.isDown) {
-      
+    if (Phaser.Input.Keyboard.JustDown(cursors.space)) {
+    // if (cursors.space.isDown) {
+      playerAttacking = true;
       switch (currentDirection) {
         case "down":
           player.anims.play("playerAttackD", true);
@@ -378,14 +386,21 @@ class Game extends Phaser.Scene {
         case "diagonal up":
           player.anims.play("playerAttackDU");
           break;
-      }      
+      }
     }
+
+    sprite.on('animationcomplete', function(animation, frame) {
+      if (animation.key === 'exampleAnimation') {
+          playerAttacking = false;
+      }
+  }, this);
 
     if (
       cursors.up.isUp &&
       cursors.down.isUp &&
       cursors.left.isUp &&
-      cursors.right.isUp
+      cursors.right.isUp &&
+      !playerAttacking
     ) {
       player.setVelocity(0);
       walkingDown = false;
